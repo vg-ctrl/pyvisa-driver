@@ -1,0 +1,166 @@
+{
+    "created_date": "18-07",
+    "instruments": {
+        "VNA": {
+            "Parameters": {
+                "Type of data": "ASCII",
+                "Path dir": "./Asysoft/Configuration/VnaFileJSON_ZNA.json",
+                "getAutoPolar": false,
+                "IP value": "10.0.0.24",
+                "VNA Model": "ZNA",
+                "Port value": 5025,
+                "GUI Dependence": true,
+                "getAutoRXSwitch": false
+            },
+            "cmd_dist": {
+                "dataReady": [
+                    "SENS:SWE:MODE SING",
+                    "*OPC?"
+                ],
+                "disconnect": [
+                    "*RST",
+                    "@LOC"
+                ],
+                "getNumReceivers": [
+                    "SENS:FOM:RNUM? \"Receivers\""
+                ],
+                "getDataBuffer": [],
+                "setScreenOn": [
+                    "SYST:DISP:UPD ON"
+                ],
+                "getIfFrequency": [
+                    "SENS:IF:FILT:STAG1:FREQ?"
+                ],
+                "getPrimary": [
+                    "SENS:FOM:RNUM? \"Primary\""
+                ],
+                "Initial Configuration": [
+                    "*RST",
+                    "CALC:PAR:SDEF 'TRC1','b1/a1'",
+                    "DISP:WIND:TRAC1:FEED 'TRC1'",
+                    "CALC:PAR:SDEF 'TRC2','b2/a2'",
+                    "DISP:WIND:TRAC2:FEED 'TRC2'",
+                    "INIT:CONT OFF",
+                    "BAND 1000",
+                    "SOUR:POW 0",
+                    "FORM ASCII",
+                    "INIT:CONT ON"
+                ],
+                "setPower": [
+                    "SOUR:POW -10.0"
+                ],
+                "getDataSinglePol": [
+                    "CALC:DATA? SDATA"
+                ],
+                "setManualTrigger": [
+                    "TRIG:SOUR MAN"
+                ],
+                "sendTrigger": [
+                    "*TRG",
+                    "Sleep:50"
+                ],
+                "setVNAToSingle": [
+                    "SENS:SWE:MODE SING;*OPC"
+                ],
+                "getNumSource": [
+                    "SENS:FOM:RNUM? \"Source\""
+                ],
+                "setScreenOff": [
+                    "SYST:DISP:UPD OFF"
+                ],
+                "setIFBandwidth": [
+                    "SENS:BWID 1000"
+                ],
+                "getDataAutoPol": [
+                    "CALC:PAR:SEL 'TRC1'",
+                    "CALC:DATA? SDATA",
+                    "CALC:PAR:SEL 'TRC2'",
+                    "CALC:DATA? SDATA"
+                ],
+                "hldMode": [
+                    "SENS:SWE:MODE HOLD"
+                ],
+                "setMonoParameters": [
+                    "SOUR:FREQ:CW 12 GHz",
+                    "SOUR:POW 6",
+                    "SENS:SWE:TYPE SEGM",
+                    "SENS:SWE:GRO:COUN 1"
+                ],
+                "setMultifrequencyParameters": [
+                    "SEGM:ADD",
+                    "FREQ:STAR  12E+9; STOP 14E+9",
+                    "SWE:POIN 401",
+                    "SENS:BWID:1000",
+                    "SOUR:POW: 0"
+                ],
+                "getSweepTime": [
+                    "Sleep:1000",
+                    "SENS:SWE:TIME?"
+                ],
+                "configureFrequencyOffset": [
+                    "SOUR:FREQ1:CONV:ARB:IFR 1,4,0,SWE",
+                    "SOUR:FREQ2:CONV:ARB:IFR 1,4,0, SWE",
+                    "SOUR:FREQ3:CONV:ARB:IFR 1,4,279E+6, SWE",
+                    "SOUR:FREQ4:CONV:ARB:IFR 1,4,279E+6, SWE",
+                    "SENS:FREQ1:CONV:ARB 1,1,279E+6, CW",
+                    "SENS:FREQ2:CONV:ARB 1,1,279E+6, CW",
+                    "SENS:FREQ3:CONV:ARB 1,1,279E+6, CW",
+                    "SENS:FREQ4:CONV:ARB 1,1,279E+6, CW",
+                    "SOUR:POW1 0",
+                    "SOUR:POW3:OFFS 0, CPAD",
+                    "SOUR:POW4:OFFS 0, CPAD",
+                    "SOUR:POW1:PERM ON",
+                    "SOUR:POW2:PERM OFF",
+                    "SOUR:POW3:PERM ON",
+                    "SOUR:POW4:PERM OFF",
+                    "FREQ1:CONV:AWR ON",
+                    "FREQ2:CONV:AWR ON",
+                    "FREQ3:CONV:AWR ON",
+                    "FREQ4:CONV:AWR ON",
+                    "SENS1:PATH1:DIR B16",
+                    "SENS1:PATH2:DIR B16",
+                    "SENS1:PATH3:DIR B16",
+                    "SENS1:PATH4:DIR B16",
+                    "SEGM:ADD",
+                    "FREQ:STAR  12E+9; STOP 14E+9",
+                    "SWE:POIN 401",
+                    "SENS:BWID:1000",
+                    "SOUR:POW: 0"
+                ],
+                "setExternalTrigger": [
+                    "TRIG:SOUR EXT",
+                    "TRIG:SLOP POS"
+                ],
+                "test_op": [
+                    "*RST",
+                    "POW:ATT AREC, 0",
+                    "POW:ATT BREC, 0",
+                    "POW:ATT CREC, 0",
+                    "POW:ATT DREC, 0",
+                    "CALC:PAR:SDEF 'TRC1','S12'",
+                    "DISP:WIND:TRAC:FEED 'TRC1'",
+                    "CALC:PAR:SDEF 'TRC2','S21'",
+                    "DISP:WIND:TRAC2:FEED 'TRC2'",
+                    "SENS:PATH1:DIR B16",
+                    "SENS:PATH2:DIR B16",
+                    "SENS:PATH3:DIR B16",
+                    "SENS:PATH4:DIR B16",
+                    "SENS:CORR:EWAV OFF",
+                    "INIT:CONT OFF",
+                    "FORM REAL,32",
+                    "TRIG:SOUR EXT",
+                    "TRIG:SLOP POS",
+                    "SWE:COUN 19",
+                    "SYSTem:ERRor:ALL?",
+                    "SEGM:ADD",
+                    "FREQ:STAR 19.0E+9; STOP 19.0E+9",
+                    "SWE:POIN 1",
+                    "SENS:BWID 1000.0",
+                    "SOUR:POW -30.0",
+                    "SWE:COUN 1",
+                    "SYSTem:ERRor:ALL?"
+                ]
+            }
+        }
+    }
+}

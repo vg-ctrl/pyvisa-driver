@@ -1,0 +1,76 @@
+    public VNA_ZNA(DataMeasurement dataMeasurement) {
+        this.dataMeasurement = dataMeasurement;
+        this.ip = "192.168.1.5";
+        this.port = 5025;
+        this.socket = null;
+        this.name = "ZNA";
+        this.id = 1;
+
+        this.minFrequency = 0.07;
+        this.maxFrequency = 70;
+        this.minAverage = 1;
+        this.maxAverage = 100;
+        this.maxNumberOfPoints = 999999999;
+        this.minInstructionTime = 0.0005;
+        this.maxInstructionTime = 0.1;
+        this.listOfBandwith = new ArrayList<Double>();
+        this.listOfBandwith.add(1.0);
+        this.listOfBandwith.add(2.0);
+        this.listOfBandwith.add(5.0);
+        this.listOfBandwith.add(10.0);
+        this.listOfBandwith.add(20.0);
+        this.listOfBandwith.add(50.0);
+        this.listOfBandwith.add(100.0);
+        this.listOfBandwith.add(200.0);
+        this.listOfBandwith.add(500.0);
+        this.listOfBandwith.add(1000.0);
+        this.listOfBandwith.add(2000.0);
+        this.listOfBandwith.add(5000.0);
+        this.listOfBandwith.add(10000.0);
+        this.listOfBandwith.add(20000.0);
+        this.listOfBandwith.add(50000.0);
+        this.listOfBandwith.add(100000.0);
+        this.bandwithDefault = 1000;
+        this.bandwithDefault = 0;
+        this.numberOfPorts = 2;
+        this.listOfPorts = new ArrayList<PortInformation>();
+        PortInformation p1 = new PortInformation("1", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p2 = new PortInformation("2", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p3 = new PortInformation("3", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p4 = new PortInformation("4", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p5 = new PortInformation("A1", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p6 = new PortInformation("A2", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p7 = new PortInformation("A3", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p8 = new PortInformation("A4", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p9 = new PortInformation("B1", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p10 = new PortInformation("B2", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p11 = new PortInformation("B3", true, true, maxInstructionTime, minInstructionTime);
+        PortInformation p12 = new PortInformation("B4", true, true, maxInstructionTime, minInstructionTime);
+
+        this.listOfPorts.add(p1);
+        this.listOfPorts.add(p2);
+        this.listOfPorts.add(p3);
+        this.listOfPorts.add(p4);
+        this.listOfPorts.add(p5);
+        this.listOfPorts.add(p6);
+        this.listOfPorts.add(p7);
+        this.listOfPorts.add(p8);
+        this.listOfPorts.add(p9);
+        this.listOfPorts.add(p10);
+        this.listOfPorts.add(p11);
+        this.listOfPorts.add(p12);
+        this.data = new byte[64];
+        this.useHarmonicMixer = false;
+        this.useMultiplier = false;
+        this.multiplierValue = 0.0;
+        this.harmonicMixerValue = 0.0;
+        this.defaultInputPortIndex = 6;
+        this.defaultOutputPotrtIndex = 7;
+        this.harmonicBands = new HMixerAndMultiplierBands();
+        this.readTraces = new ArrayList<String>();
+
+        this.multiplierCutFrequency = 20.0;
+        this.power = Double.parseDouble(this.dataMeasurement.getMedFile().getPower());
+        this.ifBandwidth = Double.parseDouble(this.dataMeasurement.getMedFile().getBandwith());
+
+    }
