@@ -24,7 +24,7 @@ class InstrumentDriver:
         self.log_file = log_file
         self.type = type
         self.rm = pyvisa.ResourceManager()
-        #self.instance = None
+        self.instance = None
         self.start_time = time.time()
 
 
@@ -79,7 +79,7 @@ class InstrumentDriver:
         self.multiplierValue = 0.0
         self.harmonicMixerValue = 0.0
         self.multiplierCutFrequency = 20.0
-        #todo
+        #TODO
         #self.harmonicBands = new HMixerAndMultiplierBands()
         #self.readTraces = new ArrayList<String>()
 
@@ -156,14 +156,14 @@ class InstrumentDriver:
             self.instance.write("*RST")
 
 
-            #todo
+            #TODO
             if(False):
                 self.instance.write("ROSC EXT")
                 self.instance.write("ROSC:EXT:FREQ 10MHz")
             
             Receivers = False
         
-            #todo
+            #TODO
             if(Receivers):
                 try:
                     self.responce = self.instance.query("INST:PORT:COUN")
@@ -181,7 +181,7 @@ class InstrumentDriver:
             measUsedP2 = ""
             inti = 3
 
-            #todo
+            #TODO
             if (self.useHarmonicMixer or self.useMultiplier):
                 pass
 
@@ -199,7 +199,7 @@ class InstrumentDriver:
                 self.instance.write("SENS1:PATH4:DIR B16")
 
 
-            #todo
+            #TODO
             if(self.useTwoReceivers):
                 pass
 
@@ -229,12 +229,12 @@ class InstrumentDriver:
     def DisableDigitalOutput(self, digitalOutput: int):
         raise NotImplementedError("Not supported yet.")
 
-    #todo
+    #TODO
     def dataReady(self, time:int):
         pass
 
 
-    #todo
+    #TODO
     def getDataSinglePol(self):
         listOfValues = []
         message = ""
@@ -286,7 +286,7 @@ class InstrumentDriver:
     def setIp(self, ip:str):
         self.ip = ip
 
-    #todo
+    #TODO
     def getPowerLO(self):
         pass
 
@@ -298,7 +298,7 @@ class InstrumentDriver:
     def setPort(self, port:int):
         self.port = port
 
-    #todo?
+    #TODO?
     #def getSocket(self):
     #def setSocket(self):
 
@@ -395,11 +395,11 @@ class InstrumentDriver:
     def getNumberOfPorts(self) -> int:
         raise NotImplementedError("Not supported yet.")
 
-    #todo
+    #TODO
     def getIFfrequency() -> float:
         pass
 
-    #todo
+    #TODO
     def getSignalInput() -> str:
         pass
 
@@ -423,7 +423,7 @@ class InstrumentDriver:
     def setError(self, error:int):
         self.error = error
 
-    #todo
+    #TODO
     def setDataMeasurement(self, dataMeasurement:DataMeasurement):
         self.dataMeasurement = dataMeasurement
 
@@ -455,7 +455,7 @@ class InstrumentDriver:
             self.logger.info(f"Error: {e}")
             return -1
     
-    #todo
+    #TODO
     def setManualTrigger(self) -> int:
         """
         Configura el analizador para recibir triggers manuales 
@@ -469,7 +469,7 @@ class InstrumentDriver:
                 self.sendCommand("TRIG:LINK 'POIN'")
             return 1
         except Exception as e:
-            self.logger.error("VNA_ZNA.setManualTrigger: {e}")
+            self.logger.error(f"VNA_ZNA.setManualTrigger: {e}")
             return -1
 
     def setExternalTrigger(self,positiveTTL:bool) -> int:
@@ -497,7 +497,7 @@ class InstrumentDriver:
             return 1
          
         except Exception as e:
-            self.logger.error("VNA_ZNA.setExternalTrigger: {e}")
+            self.logger.error(f"VNA_ZNA.setExternalTrigger: {e}")
             return -1
         
 
@@ -525,7 +525,7 @@ class InstrumentDriver:
                 if((self.useHarmonicMixer or self.useMultiplier) and swBB):
                     self.configureFrequencyOffset()
                 else:
-                    #todo
+                    #TODO
                     pass
 
 
@@ -534,21 +534,101 @@ class InstrumentDriver:
 
 
 
+    def setMonofrecuencyParameters(self, frequency:float) -> int:
+        try:
+            self.sendCommand("SOUR:FREQ:CW " + frequency + "GHz")
+            if(self.useHarmonicMixer or self.useMultiplier):
+                self.configureFrequencyOffset()
+            
+            self.getErrors()
+            return 1
+        except Exception as e
+            self.logger.error(f"VNA_ZNA.setMonofrequencyParameters: {e}")
+            return -1
+        
+    def getErrors(self) -> int:
+        """
+        Funccionn para pedir y recoger los errores en el analizador
+        
+        Returns: Devuelve el numero de errores producidos. "" e.o.c.
+        """
+        numberErrors = 0
+
+        try:
+            self.instance.clear()
+            numberErrors = self.instance.query("SYSTem:ERRor:COUNt?")
+            self.instance.clear()
+            response = self.instance.query("SYSTem:ERRor:ALL?").strip()
+            self.logger.info("Error response " + response)
+
+        except Exception as e
+            self.logger.error(f"VNA_ZNA.getErrors: f{e}")
+            return -1
+        return numberErrors
+    
+
+    def getNumReceivers(self) -> int:
+        try:
+            #TODO possibly add query method?
+            responce = self.instance.query("SENS:FOM:RNUM? \"Receivers\"")
+            return responce.strip()
+        except Exception as e:
+            self.logger.error(f"getNumReceivers: {e}")
+            return -1
 
 
+    def getNumSource(self) -> int:
+        try:
+            response = self.sendQuery("SENS:FOM:RNUM? \"Source\"")
+            return response.strip()
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.getNumSource: {e}")
+            return -1
+        
+    def getIfFrequency() -> float:
+        try:
+            response = self.sendQuery("SENS:IF:FILT:STAG1:FREQ?")
+            return response.strip().replace(',','.')
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.getIfFrequency: {e}")
+            return -1
+
+    def configureFrequencyOffset() -> int:
+        try:
+            # We enable the port config mode.
+            harmoValue = 0
+            IfFrequency = 0
+
+            divisorVal = self.getHarmonicMixerValue()
+            multiplierVal = self.getMultiplierValue()
+            powerRF = self.power
+            #TODO
+            powerLO = self.harmonicBands.getBand(this.maxMeasurementFrequency).getPowerLO()
+            self.logger.info("mmWaveHead Enabled")
+            # VDI mmHead: Will work with any IF (we showed the answer in freq)
+            # double mixer = 279; // Recommended by VDI:
+            mixer = self.harmonicBands.getBand(this.maxMeasurementFrequency).getIFfrequency(); // Recommended by VDI:
+            IfFrequency = mixer * 1e6;	//  MHz.
+
+            # Things to do:   
+            #     -Checking that mixer value is the same
+            #    - Checking that ports are enabled
+            #    - Checking that mixing is the same (coefficients)
+            
+            sign = -1
 
 
+    def readASCIIData() -> str:
+        try:
+            response = self.instance.read_ascii_values()
+            return response.strip().replace(":",",")
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.readASCIIData: {e}")
+            return ""
+        
 
 
-
-
-
-
-
-
-
-
-
+    
 
 
 
