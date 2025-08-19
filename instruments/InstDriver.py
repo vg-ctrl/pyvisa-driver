@@ -6,9 +6,9 @@ from time import sleep
 
 from new_classes import *
 
-#list_devices()
-#connect()
-#check_connection()
+#TODO
+#lists to numpy array
+
 
 
 class InstrumentDriver:
@@ -27,13 +27,24 @@ class InstrumentDriver:
         self.instance = None
         self.start_time = time.time()
 
-
+        self.VNAConfiguration: VNAConfiguration
+        self.dataFormat = TypeVNADataFormat.REAL32
 
         #New vars
         self.readFromVNA = False
         self.useTwoReceivers = False
         self.useFifoBuffer = False
+        self.triggerType = None
+        self.TIMESLEEP = 50
 
+        self.defaultIFBWIndex = 9
+        self.defaultInputPortIndex = 6
+        self.defaultOutputPotrtIndex = 7
+        self.sweepTime = 0
+
+        self.readTraces = []
+        self.traces = []
+        self.numTraces = 0
 
 
         self.ip = self.config["Parameters"]["IP value"]
@@ -114,32 +125,30 @@ class InstrumentDriver:
         else:
             self.logger.info(instr_list)
 
-    def connect(self):
+    def connect(self) -> int:
         #hislip port: 4880
         resource_address = "TCPIP::" + self.ip + "::hislip0"
         #resource_address = "TCPIP0::" + self.config["VNA_parameters"]["IP value"] +"::" + str(self.config["VNA_parameters"]["Port value"]) + "::SOCKET"
         self.logger.info(f"Connecting to {resource_address}")
-        for attempt in range(3):
-            try:
-                self.instance = self.rm.open_resource(resource_address, timeout=5000)
-            except Exception as e:
-                self.logger.info(f"Connection attempt {attempt+1}/3 failed")
-                self.logger.info(f"{e}")
-                sleep(1)
-            else:
-                self.instance.read_termination = '\n'
-                self.instance.write_termination = '\n'
-                self.instance.write("*rst; status:preset; *cls")
-                idn = self.instance.query("*IDN?")
-                sleep(1)
-                self.logger.info(f"Connected to: '{idn}'")
-                break
+
+        try:
+            self.instance = self.rm.open_resource(resource_address, timeout=5000)
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.connect: {e}")
+            return -1
+        else:
+            self.instance.read_termination = '\n' # type: ignore
+            self.instance.write_termination = '\n'# type: ignore
+            self.instance.write("*rst; status:preset; *cls") # type: ignore
+            idn = self.instance.query("*IDN?") # type: ignore
+            self.logger.info(f"Connected to: '{idn}'")
+            return 1
     
     def disconnect(self):
         try:
             if self.instance is not None:
                 self.write_cmd_sequence("disconnect")
-                self.instance.write("@LOC")
+                self.instance.write("@LOC") # type: ignore
                 self.instance.close()
                 self.logger.info("Connection closed")
                 self.logger.info(f"Session time:{time.time()-self.start_time}")
@@ -153,7 +162,7 @@ class InstrumentDriver:
     def InitialConfiguration(self, vnaConfiguration):
         self.vnaConfiguration = vnaConfiguration
         if(not self.readFromVNA):
-            self.instance.write("*RST")
+            self.instance.write("*RST") # type: ignore
 
 
             #TODO
@@ -166,7 +175,7 @@ class InstrumentDriver:
             #TODO
             if(Receivers):
                 try:
-                    self.responce = self.instance.query("INST:PORT:COUN")
+                    self.responce = self.instance.query("INST:PORT:COUN") # type: ignore
 
                     self.numberOfPorts = self.responce.strip()
 
@@ -190,13 +199,13 @@ class InstrumentDriver:
 
 
             if ("b1" in measUsedP1):
-                self.instance.write("SENS1:PATH1:DIR B16")
+                self.instance.write("SENS1:PATH1:DIR B16") # type: ignore
             elif ("b2" in measUsedP1):
-                self.instance.write("SENS1:PATH2:DIR B16")
+                self.instance.write("SENS1:PATH2:DIR B16") # type: ignore
             elif ("b3" in measUsedP1):
-                self.instance.write("SENS1:PATH3:DIR B16")
+                self.instance.write("SENS1:PATH3:DIR B16") # type: ignore
             elif ("b4" in measUsedP1):
-                self.instance.write("SENS1:PATH4:DIR B16")
+                self.instance.write("SENS1:PATH4:DIR B16") # type: ignore
 
 
             #TODO
@@ -212,7 +221,7 @@ class InstrumentDriver:
 
 
     def SendTrigger(self):
-        self.instance.write("*TRG")
+        self.instance.write("*TRG") # type: ignore
         sleep(self.TIMESLEEP)
 
 
@@ -244,8 +253,8 @@ class InstrumentDriver:
             if(self.useFifoBuffer):
                 pass
             else:
-                self.instance.write("CALC:DATA? SDATA")
-                if(self.dataMeasurement.getAcquisitionType() == self.TypeAcquisition.Step):
+                self.instance.write("CALC:DATA? SDATA") # type: ignore
+                if(True):
                     try:
                         sleep(self.TIMESLEEP)
                     except Exception as e:
@@ -274,11 +283,11 @@ class InstrumentDriver:
             return self.getDataSinglePol()
     
 
-    def getMultipleData():
+    def getMultipleData(self):
         raise NotImplementedError("Not supported yet.")
 
     def clearBuffer(self):
-        self.writeCommand("*CLS")
+        self.sendCommand("*CLS")
 
     def getIp(self) -> str:
         return self.ip
@@ -384,7 +393,7 @@ class InstrumentDriver:
         self.listOfBandwith = listOfBandwith
 
     
-    def getBandwithDefault() -> int:
+    def getBandwithDefault(self) -> int:
         raise NotImplementedError("Not supported yet.")
     
 
@@ -396,12 +405,12 @@ class InstrumentDriver:
         raise NotImplementedError("Not supported yet.")
 
     #TODO
-    def getIFfrequency() -> float:
-        pass
+    def getIFfrequency(self) -> float:
+        return 1
 
     #TODO
-    def getSignalInput() -> str:
-        pass
+    def getSignalInput(self) -> str:
+        return ""
 
 
     def setNumberOfPorts(self, numberOfPorts:int):
@@ -447,7 +456,7 @@ class InstrumentDriver:
 
     def sendCommand(self,command:str) -> int:
         try:
-            self.instance.write(command)
+            self.instance.write(command) # type: ignore
             self.logger.info("VNA_ZNA_command: " + command)
             return 1
 
@@ -455,6 +464,18 @@ class InstrumentDriver:
             self.logger.info(f"Error: {e}")
             return -1
     
+    def sendQuery(self,command:str) -> str:
+        try:
+            self.instance.write(command) # type: ignore
+            self.logger.info("VNA_ZNA_query: " + command)
+            response = self.instance.read() # type: ignore
+            return response
+
+        except Exception as e:
+            self.logger.info(f"Error: {e}")
+            return ""
+
+
     #TODO
     def setManualTrigger(self) -> int:
         """
@@ -500,7 +521,7 @@ class InstrumentDriver:
             self.logger.error(f"VNA_ZNA.setExternalTrigger: {e}")
             return -1
         
-
+    
     def setMultifrecuencyParameters(self) -> int:
         try:
             if(not self.readFromVNA):
@@ -528,21 +549,21 @@ class InstrumentDriver:
                     #TODO
                     pass
 
-
+            return 1
         except Exception as e:
-            pass
+            return -1
 
 
 
     def setMonofrecuencyParameters(self, frequency:float) -> int:
         try:
-            self.sendCommand("SOUR:FREQ:CW " + frequency + "GHz")
+            self.sendCommand("SOUR:FREQ:CW " + str(frequency) + "GHz")
             if(self.useHarmonicMixer or self.useMultiplier):
                 self.configureFrequencyOffset()
             
             self.getErrors()
             return 1
-        except Exception as e
+        except Exception as e:
             self.logger.error(f"VNA_ZNA.setMonofrequencyParameters: {e}")
             return -1
         
@@ -555,23 +576,23 @@ class InstrumentDriver:
         numberErrors = 0
 
         try:
-            self.instance.clear()
-            numberErrors = self.instance.query("SYSTem:ERRor:COUNt?")
-            self.instance.clear()
-            response = self.instance.query("SYSTem:ERRor:ALL?").strip()
+            self.instance.clear() # type: ignore
+            numberErrors = self.sendQuery("SYSTem:ERRor:COUNt?")
+            self.instance.clear()# type: ignore
+            response = self.sendQuery("SYSTem:ERRor:ALL?").strip()
             self.logger.info("Error response " + response)
 
-        except Exception as e
+        except Exception as e:
             self.logger.error(f"VNA_ZNA.getErrors: f{e}")
             return -1
-        return numberErrors
+        return int(numberErrors)
     
 
     def getNumReceivers(self) -> int:
         try:
             #TODO possibly add query method?
-            responce = self.instance.query("SENS:FOM:RNUM? \"Receivers\"")
-            return responce.strip()
+            response = self.sendQuery("SENS:FOM:RNUM? \"Receivers\"")
+            return int(response.strip())
         except Exception as e:
             self.logger.error(f"getNumReceivers: {e}")
             return -1
@@ -580,20 +601,21 @@ class InstrumentDriver:
     def getNumSource(self) -> int:
         try:
             response = self.sendQuery("SENS:FOM:RNUM? \"Source\"")
-            return response.strip()
+            return int(response.strip())
         except Exception as e:
             self.logger.error(f"VNA_ZNA.getNumSource: {e}")
             return -1
         
-    def getIfFrequency() -> float:
+    def getIfFrequency(self) -> float:
         try:
             response = self.sendQuery("SENS:IF:FILT:STAG1:FREQ?")
-            return response.strip().replace(',','.')
+            return float(response.strip().replace(',','.'))
         except Exception as e:
             self.logger.error(f"VNA_ZNA.getIfFrequency: {e}")
             return -1
 
-    def configureFrequencyOffset() -> int:
+    def configureFrequencyOffset(self) -> int:
+        #TODO
         try:
             # We enable the port config mode.
             harmoValue = 0
@@ -603,12 +625,12 @@ class InstrumentDriver:
             multiplierVal = self.getMultiplierValue()
             powerRF = self.power
             #TODO
-            powerLO = self.harmonicBands.getBand(this.maxMeasurementFrequency).getPowerLO()
+            #powerLO = self.harmonicBands.getBand(this.maxMeasurementFrequency).getPowerLO()
             self.logger.info("mmWaveHead Enabled")
             # VDI mmHead: Will work with any IF (we showed the answer in freq)
             # double mixer = 279; // Recommended by VDI:
-            mixer = self.harmonicBands.getBand(this.maxMeasurementFrequency).getIFfrequency(); // Recommended by VDI:
-            IfFrequency = mixer * 1e6;	//  MHz.
+            #mixer = self.harmonicBands.getBand(this.maxMeasurementFrequency).getIFfrequency(); // Recommended by VDI:
+            #IfFrequency = mixer * 1e6;	//  MHz.
 
             # Things to do:   
             #     -Checking that mixer value is the same
@@ -616,41 +638,342 @@ class InstrumentDriver:
             #    - Checking that mixing is the same (coefficients)
             
             sign = -1
+            return 1
+        
+        except:
+            return -1
 
 
-    def readASCIIData() -> str:
+    def readASCIIData(self) -> str:
         try:
-            response = self.instance.read_ascii_values()
+            response = self.instance.read_ascii_values() # type: ignore
             return response.strip().replace(":",",")
         except Exception as e:
             self.logger.error(f"VNA_ZNA.readASCIIData: {e}")
             return ""
         
 
+    def readBinaryData(self) -> str:
+        try:
+            response = self.instance.read_binary_values( #type: ignore
+                container=list        
+            )
+            return response
+        
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.readBinaryData: {e}")
+            return ""
+
+
+    def getTriggerType(self):
+        return self.triggerType
+    
+
+    def getUseMultiplier(self) -> bool:
+        return self.useMultiplier
+    
+
+
+    def setUseMultiplier(self, value:bool):
+        self.useMultiplier = value
+
+
+    def getUseHarmomixMixer(self) -> bool:
+        return self.useHarmonicMixer
+    
+
+    def setUseHarmonicMixer(self, value:bool):
+        self.useHarmonicMixer = value
+
+    def getMultiplierValue(self) -> int:
+        #TODO
+        return 1
+
+
+    def setMultiplierValue(self, value:int):
+        self.multiplierValue = value
+
+    def getHarmonicMixerValue(self) -> int:
+        #TODO
+        return 1
+
+    def getHarmonicAndMultiplierBands(self) -> HMixerAndMultiplierBands:
+        return self.harmonicBands
+
+    def setHarmonicAndMultiplierBands(self, theBands: HMixerAndMultiplierBands):
+        self.harmonicBands = theBands
+
+    def setHarmonicMixerValue(self, value:int):
+        self.harmonicMixerValue = value
+
+    def setEnable(self, enable:bool):
+        self.enable = enable
+
+    def getMaxMeasurementFrequency(self) -> float:
+        return self.maxMeasurementFrequency
+
+
+    def etMaxMeasurementFrequency(self, maxFrequency:float):
+        self.maxMeasurementFrequency = maxFrequency
+
+    def getMinMeasurementFrequency(self) -> float:
+        return self.minMeasurementFrequency
+    
+
+    def setMinMeasurementFrequency(self, minFrequency:float):
+        self.minMeasurementFrequency = minFrequency
+
+    def setSwitchForComponent(self, component:int):
+        raise NotImplementedError("Not supported yet.")
+
+    def getDefaultIFBWIndex(self) -> int:
+        return self.defaultIFBWIndex
+    
+
+
+    def getDefaultInputPortIndex(self) -> int:
+        return self.defaultInputPortIndex
+    
+
+    def getDefaultOutputPortIndex(self) -> int:
+        return self.defaultOutputPotrtIndex
+    
+
+    def setMeasurementEventListener(self,listener:MeasurementEventListener):
+        #TODO
+        pass
+        #self.eventListeners.add(listener)
+    
+
+    def setDataFormat(self, dataFormat:TypeVNADataFormat):
+        self.dataFormat = dataFormat
+    
+
+
+    def getDataFormat(self) -> TypeVNADataFormat:
+        return self.dataFormat
+    
+
+    def getUseFifoBuffer(self) ->bool:
+        return self.useFifoBuffer
+    
+
+    def setUseFifoBuffer(self,useFifoBuffer:bool):
+        self.useFifoBuffer = useFifoBuffer
+    
+    def newMeasurementEvent(self):
+        #TODO
+        pass
+
+    def setScreenOff(self):
+        #TODO
+        pass
+
+    def setScreenOn(self):
+        self.sendCommand("SYST:DISP:UPD ON")
+
+
+    def getMultiplierCutFrequency(self):
+        #TODO
+        pass
 
     
+    def setMultiplierCutFrequency(self, cutFrequency:float):
+        self.multiplierCutFrequency = cutFrequency
+
+
+    def resetBuffer(self):
+        self.sendCommand("*CLS")
+
+
+    def setUseTwoReceivers(self, useTwoReceivers:bool):
+        self.useTwoReceivers = useTwoReceivers
+
+    def getUseTwoReceivers(self) -> bool:
+        return self.useTwoReceivers
+    
+
+    def getSweepTime(self, forceRead:bool) -> float:
+        return self.sweepTime
+
+
+    def readDataFromAnaliser(self) -> list:
+        listOfValues = []
+        try:
+            if(self.dataFormat == TypeVNADataFormat.ASCII):
+                message = self.readASCIIData()
+            else:
+                message = self.readBinaryData()
+            values = message.split(",")
+
+            for value in values:
+                if(not value == ""):
+                    listOfValues.append(float(value))
+        
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.readDataFromAnaliser: {e}")
+        finally:
+            return listOfValues
+            
+        
+
+    def setPower(self, power:float) -> int:
+        try:
+            self.power = power
+            self.sendCommand("SOUR:POW " + str(power))
+            return 1
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.setPower: {e}")
+            return -1
+        
+
+    def setIFBandwidth(self, ifBW: float):
+        try:
+            self.ifBandwidth = ifBW
+            self.sendCommand("SENS:BWID " + str(ifBW))
+            return 1
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.setIFBandwidth: {e}")
+            return -1
+
+
+    def setFreqBandID(self,bandId:int): 
+        raise NotImplementedError("Not supported yet.")
+
+    def sendConfigurationAndDisconnect(self) -> bool:
+        #TODO
+        return True
+
+
+    def getDataAutoCalibrate(self) -> list:
+        raise NotImplementedError("Not supported yet.")
+
+
+    def readConfigurationAndDisconnect(self) -> bool:
+        try:
+            if(not self.isConnected):
+                if(self.connect() >= 0):
+                    self.readTraces = []
+                    self.readFromVNA = True
+
+                    #Try to read any parameter from the VNA
+                    response = self.sendQuery("SEGM:COUN?")
+
+                    numSegm = response.strip()
+                    #Anadir el numero de segmento despues de SEGM
+                    response = self.sendQuery("SENS:FREQ:STAR?")
+                    startFreq = float(response.strip())
+
+                    #Tenemos la freq en Ghz
+                    startF = startFreq / 1000000000
+
+                    #A�adir el n�mero de segmento despu�s de SEGM
+                    response = self.sendQuery("SENS:FREQ:STOP?")
+                    stopFreq = float(response.strip())
+                    stopF = stopFreq / 1000000000
+
+                    response = self.sendQuery("SENS:SWE:POIN?")
+
+                    numF = int(response)
+
+
+                    if(startF != stopF):
+                        exit_aux1 = (stopF - startF) / (numF -1)
+                        exit_aux2 = exit_aux1 * 10000
+                        exit_aux3 = round(exit_aux2)
+                        exit = exit_aux3 / 10000
+                    else:
+                        exit = 1
+
+
+                    listFreqs = []
+
+                    fr = Frequencies(startF, stopF, exit)
+                    listFreqs.append(fr)
+
+                    response = self.sendQuery("SENS:BWID?")
+
+                    ifBWID = response.strip()
+
+                    self.ifBandwidth = float(ifBWID)
+
+
+                    #Numero de trazas y cuales son
+                    response = self.sendQuery("CALC:PAR:CAT?")
+                    Traces = response.strip()
+                    self.traces = Traces.replace("\'","").split(",")
+                    self.numTraces = len(self.traces) / 2
+
+                    for i in range (0, len(self.traces) - 1):
+                        self.readTraces.append(self.traces[i + 1])
+
+
+                    #Definir useTwoReceivers value
+                    if(self.numTraces < 2):
+                        self.useTwoReceivers = False
+
+                    response = self.sendQuery("SOUR:POW?")
+
+                    self.power = float(response.strip())
+
+
+                    self.vnaConfiguration = VNAConfiguration(0, listFreqs, "", "" , "", self.ifBandwidth, 0, self.power)
+                    self.setScreenOn()
+
+                    self.disconnect()
+            return True
+                
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.readConfigurationAndDisconnect: {e}")
+            return False
+
+                    
+
+
+    def setReadFromVNA(self, readFromVNA:bool):
+        self.readFromVNA = readFromVNA
+
+    def getReadFromVNA(self) -> bool:
+        return self.readFromVNA
+    
+    def getVNAConfiguration(self) -> VNAConfiguration:
+        return self.VNAConfiguration
+    
+
+    def getTraces(self) -> list:
+        return self.readTraces
+    
+
+    def getDataAndDiscard(self) -> bool:
+        raise NotImplementedError("Not supported yet.")
+
+
+
+
+
+
 
 
 
     def write_with_delay(self, cmd, delay=0.1):
-        if not self.check_connection():
+        if not self.isConnected():
             return
-        self.instance.write(cmd)
+        self.instance.write(cmd)# type: ignore
         sleep(delay)
         return
     
     def query_with_delay(self, cmd, delay=0.1):
-        if not self.check_connection():
+        if not self.isConnected():
             return
-        response = self.instance.query(cmd)
+        response = self.instance.query(cmd) # type: ignore
         sleep(delay)
         return response.strip()
     
-    def check_connection(self):
+    def isConnected(self):
         if self.instance is None:
             self.logger.info("Device is not connected")
             return False
-        response = self.instance.query("*IDN?")
+        response = self.sendQuery("*IDN?")
         if response is None: 
             self.logger.info("Device is not responding")
             return False
@@ -667,12 +990,12 @@ class InstrumentDriver:
         
         cmd_sequence = self.config["cmd_dist"][cmd]
         self.logger.info(f"Containing the following commands\n{cmd_sequence}")
-        if not self.check_connection():
+        if not self.isConnected():
             return
         try: 
             for command in cmd_sequence:
                 if command == "SYSTem:ERRor:ALL?":
-                    self.logger.info(self.instance.query(command))
+                    self.logger.info(self.sendQuery(command))
                 else:
                     self.write_with_delay(command, 1)
         except Exception as e:

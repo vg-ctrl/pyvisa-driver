@@ -54,3 +54,25 @@ for command in cmd_sequence:
 
 
 #sweep 983
+
+
+    def connect(self) -> int:
+        #hislip port: 4880
+        resource_address = "TCPIP::" + self.ip + "::hislip0"
+        #resource_address = "TCPIP0::" + self.config["VNA_parameters"]["IP value"] +"::" + str(self.config["VNA_parameters"]["Port value"]) + "::SOCKET"
+        self.logger.info(f"Connecting to {resource_address}")
+        for attempt in range(3):
+            try:
+                self.instance = self.rm.open_resource(resource_address, timeout=5000)
+            except Exception as e:
+                self.logger.info(f"Connection attempt {attempt+1}/3 failed")
+                self.logger.info(f"{e}")
+                sleep(1)
+            else:
+                self.instance.read_termination = '\n' # type: ignore
+                self.instance.write_termination = '\n'# type: ignore
+                self.instance.write("*rst; status:preset; *cls") # type: ignore
+                idn = self.instance.query("*IDN?") # type: ignore
+                sleep(1)
+                self.logger.info(f"Connected to: '{idn}'")
+                break
