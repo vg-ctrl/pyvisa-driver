@@ -1,13 +1,14 @@
-from instruments.InstDriver import InstrumentDriver
 import os
-from instruments.new_classes import PortInformation
+import json
 os.system('cls')
 
 
-port1 = PortInformation("1", True, True, 2, 3)
+with open("bands.json",'r') as f:
+    harmonicBands = json.load(f)
+f.close()
 
-print(port1)
-
+for band in harmonicBands:
+    print(harmonicBands[band]["LowerLimit"])
 
 exit()
 

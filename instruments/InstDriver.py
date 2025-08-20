@@ -6,8 +6,7 @@ from time import sleep
 
 from new_classes import *
 
-#TODO
-#lists to numpy array
+#TODO lists to numpy array?
 
 
 
@@ -20,6 +19,10 @@ class InstrumentDriver:
         f.close()
         self.config = self.config_file["instruments"][self.type]
  
+        with open("bands.json",'r') as f:
+            self.harmonicBands = json.load(f)
+        f.close()
+        
 
         self.log_file = log_file
         self.type = type
@@ -36,7 +39,7 @@ class InstrumentDriver:
         self.useFifoBuffer = False
         self.triggerType = None
         self.TIMESLEEP = 50
-
+        self.currentMedFile = None
         self.defaultIFBWIndex = 9
         self.defaultInputPortIndex = 6
         self.defaultOutputPotrtIndex = 7
@@ -65,6 +68,7 @@ class InstrumentDriver:
         self.numberOfPorts = 2
 
         self.listOfPorts = []
+        self.eventListeners = []
 
         p1 =   PortInformation("1", True, True, self.maxInstructionTime, self.minInstructionTime)
         p2 =   PortInformation("2", True, True, self.maxInstructionTime, self.minInstructionTime)
@@ -90,9 +94,6 @@ class InstrumentDriver:
         self.multiplierValue = 0.0
         self.harmonicMixerValue = 0.0
         self.multiplierCutFrequency = 20.0
-        #TODO
-        #self.harmonicBands = new HMixerAndMultiplierBands()
-        #self.readTraces = new ArrayList<String>()
 
         #End new vars
 
@@ -165,14 +166,13 @@ class InstrumentDriver:
             self.instance.write("*RST") # type: ignore
 
 
-            #TODO
+            #TODO dataMeasurement vnaConfiguration
             if(False):
                 self.instance.write("ROSC EXT")
                 self.instance.write("ROSC:EXT:FREQ 10MHz")
             
             Receivers = False
         
-            #TODO
             if(Receivers):
                 try:
                     self.responce = self.instance.query("INST:PORT:COUN") # type: ignore
@@ -190,7 +190,6 @@ class InstrumentDriver:
             measUsedP2 = ""
             inti = 3
 
-            #TODO
             if (self.useHarmonicMixer or self.useMultiplier):
                 pass
 
@@ -208,7 +207,6 @@ class InstrumentDriver:
                 self.instance.write("SENS1:PATH4:DIR B16") # type: ignore
 
 
-            #TODO
             if(self.useTwoReceivers):
                 pass
 
@@ -238,12 +236,14 @@ class InstrumentDriver:
     def DisableDigitalOutput(self, digitalOutput: int):
         raise NotImplementedError("Not supported yet.")
 
-    #TODO
-    def dataReady(self, time:int):
-        pass
+    #TODO dataMeasurement
+    def dataReady(self, time:int) -> int:
+        try:
+            self.instance.clear() #type: ignore
+            if
 
 
-    #TODO
+    #TODO dataMeasurement
     def getDataSinglePol(self):
         listOfValues = []
         message = ""
@@ -295,9 +295,8 @@ class InstrumentDriver:
     def setIp(self, ip:str):
         self.ip = ip
 
-    #TODO
-    def getPowerLO(self):
-        pass
+    def getPowerLO(self) -> float:
+        return float(self.harmonicBands[self.maxMeasurementFrequency]["PowerLO"])
 
 
 
@@ -307,9 +306,6 @@ class InstrumentDriver:
     def setPort(self, port:int):
         self.port = port
 
-    #TODO?
-    #def getSocket(self):
-    #def setSocket(self):
 
     def getName(self) -> str:
         return self.name
@@ -404,13 +400,20 @@ class InstrumentDriver:
     def getNumberOfPorts(self) -> int:
         raise NotImplementedError("Not supported yet.")
 
-    #TODO
-    def getIFfrequency(self) -> float:
-        return 1
 
-    #TODO
+    def getIFfrequency(self) -> float:
+        try:
+            response = self.sendQuery("SENS:IF:FILT:STAG1:FREQ?")
+            return float(response.strip().replace(",","."))
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.getIFfrequency: {e}")
+            return -1
+
     def getSignalInput(self) -> str:
-        return ""
+        if(not (self.harmonicBands is None or not self.harmonicBands)):
+            return self.harmonicBands[self.maxMeasurementFrequency]["SignalInput"]
+        else:
+            return "Port"
 
 
     def setNumberOfPorts(self, numberOfPorts:int):
@@ -432,7 +435,7 @@ class InstrumentDriver:
     def setError(self, error:int):
         self.error = error
 
-    #TODO
+    #TODO dataMeasurement
     def setDataMeasurement(self, dataMeasurement:DataMeasurement):
         self.dataMeasurement = dataMeasurement
 
@@ -476,7 +479,6 @@ class InstrumentDriver:
             return ""
 
 
-    #TODO
     def setManualTrigger(self) -> int:
         """
         Configura el analizador para recibir triggers manuales 
@@ -492,6 +494,11 @@ class InstrumentDriver:
         except Exception as e:
             self.logger.error(f"VNA_ZNA.setManualTrigger: {e}")
             return -1
+
+
+
+
+
 
     def setExternalTrigger(self,positiveTTL:bool) -> int:
         """
@@ -546,8 +553,8 @@ class InstrumentDriver:
                 if((self.useHarmonicMixer or self.useMultiplier) and swBB):
                     self.configureFrequencyOffset()
                 else:
-                    #TODO
-                    pass
+                    
+
 
             return 1
         except Exception as e:
@@ -590,7 +597,6 @@ class InstrumentDriver:
 
     def getNumReceivers(self) -> int:
         try:
-            #TODO possibly add query method?
             response = self.sendQuery("SENS:FOM:RNUM? \"Receivers\"")
             return int(response.strip())
         except Exception as e:
@@ -615,7 +621,6 @@ class InstrumentDriver:
             return -1
 
     def configureFrequencyOffset(self) -> int:
-        #TODO
         try:
             # We enable the port config mode.
             harmoValue = 0
@@ -624,13 +629,14 @@ class InstrumentDriver:
             divisorVal = self.getHarmonicMixerValue()
             multiplierVal = self.getMultiplierValue()
             powerRF = self.power
-            #TODO
-            #powerLO = self.harmonicBands.getBand(this.maxMeasurementFrequency).getPowerLO()
+            powerLO = float(self.harmonicBands[self.maxMeasurementFrequency]["PowerLO"])
+
             self.logger.info("mmWaveHead Enabled")
+
             # VDI mmHead: Will work with any IF (we showed the answer in freq)
             # double mixer = 279; // Recommended by VDI:
-            #mixer = self.harmonicBands.getBand(this.maxMeasurementFrequency).getIFfrequency(); // Recommended by VDI:
-            #IfFrequency = mixer * 1e6;	//  MHz.
+            mixer = float(self.harmonicBands[self.maxMeasurementFrequency]["IFfrequency"]) #Recommended by VDI:
+            IfFrequency = mixer * 1e6;	#  MHz.
 
             # Things to do:   
             #     -Checking that mixer value is the same
@@ -638,10 +644,94 @@ class InstrumentDriver:
             #    - Checking that mixing is the same (coefficients)
             
             sign = -1
+            #TODO POS?
+            if(self.harmonicBands[self.maxMeasurementFrequency]["LOMix"] == "POS"):
+                sign = 1
+            else:
+                sign = -1
+
+            IFfrecCorrected = sign * (IfFrequency / divisorVal)
+
+            if(divisorVal != -1 and self.getMultiplierValue() > 0):
+
+                #Changing source:
+                StringPort1 = "1"
+                StringPort2 = "2"
+                StringPort3 = "3"
+                StringPort4 = "4"
+
+                #Power Values:
+                self.sendCommand("SOUR:POW" + StringPort1 + " " + str(powerRF))
+                self.sendCommand("SOUR:POW" + StringPort3 + ":OFFS " + str(powerLO) + ", ONLY")
+
+                #Generator on:
+                self.sendCommand("SOUR:POW" + StringPort1 + ":PERM ON")
+                self.sendCommand("SOUR:POW" + StringPort2 + ":PERM OFF")
+                self.sendCommand("SOUR:POW" + StringPort3 + ":PERM ON")
+                self.sendCommand("SOUR:POW" + StringPort4 + ":PERM OFF")
+
+                # Port1
+                self.sendCommand("SOUR:FREQ" + StringPort1 + ":CONV:ARB:IFR 1," + str(multiplierVal) + ",0,SWE")
+                # Port3
+                self.sendCommand("SOUR:FREQ" + StringPort3 + ":CONV:ARB:IFR 1," + str(divisorVal) + ", " + str(IFfrecCorrected) + ", SWE")
+
+                setPorts2and4 = False
+
+
+                if(setPorts2and4):
+
+                    # Receiver Segment
+                    self.sendCommand("SENS:FREQ" + StringPort1 + ":CONV:ARB 1,1, " + str(IfFrequency) + ", CW")
+                    self.sendCommand("SENS:FREQ" + StringPort2 + ":CONV:ARB 1,1, " + str(IfFrequency) + ", CW")
+                    self.sendCommand("SENS:FREQ" + StringPort4 + ":CONV:ARB 1,1, " + str(IfFrequency) + ", CW")
+
+                    # Receiver formula
+                    self.sendCommand("FREQ1:CONV:AWR ON")
+                    self.sendCommand("FREQ2:CONV:AWR ON")
+                    self.sendCommand("FREQ4:CONV:AWR ON")
+
+                    #Direct Acces to receivers
+                    self.sendCommand("SENS1:PATH1:DIR B16")
+                    self.sendCommand("SENS1:PATH2:DIR B16")
+                    self.sendCommand("SENS1:PATH4:DIR B16")
+
+                else:
+                    # Port1
+                    self.sendCommand("SOUR:FREQ" + StringPort1 + ":CONV:ARB:IFR 1," + str(multiplierVal) + ",0,SWE")
+                    # Port2
+                    self.sendCommand("SOUR:FREQ" + StringPort2 + ":CONV:ARB:IFR 1," + str(multiplierVal) + ",0,SWE")
+                    # Port4
+                    self.sendCommand("SOUR:FREQ" + StringPort4 + ":CONV:ARB:IFR 1," + str(multiplierVal) + ",0,SWE")
+                    # Port3
+                    self.sendCommand("SOUR:FREQ" + StringPort3 + ":CONV:ARB:IFR 1," + str(divisorVal) + ", " + str(IFfrecCorrected) + ", SWE")
+
+                    # Receiver Segment
+                    self.sendCommand("SENS:FREQ" + StringPort1 + ":CONV:ARB 1,1, " + str(IfFrequency) + ", CW")
+                    self.sendCommand("SENS:FREQ" + StringPort2 + ":CONV:ARB 1,1, " + str(IfFrequency) + ", CW")
+                    self.sendCommand("SENS:FREQ" + StringPort3 + ":CONV:ARB 1,1, " + str(IfFrequency) + ", CW")
+                    self.sendCommand("SENS:FREQ" + StringPort4 + ":CONV:ARB 1,1, " + str(IfFrequency) + ", CW")
+
+                    # Receiver formula
+                    self.sendCommand("FREQ1:CONV:AWR ON")
+                    self.sendCommand("FREQ2:CONV:AWR ON")
+                    self.sendCommand("FREQ3:CONV:AWR ON")
+                    self.sendCommand("FREQ4:CONV:AWR ON")
+
+                    #Direct Acces to receivers
+                    self.sendCommand("SENS1:PATH1:DIR B16")
+                    self.sendCommand("SENS1:PATH2:DIR B16")
+                    self.sendCommand("SENS1:PATH3:DIR B16")
+                    self.sendCommand("SENS1:PATH4:DIR B16")
+
+
+                    #Setting the frequency range
+                    #TODO dataMeasurement
+
+
             return 1
-        
+    
         except:
-            return -1
+            return  
 
 
     def readASCIIData(self) -> str:
@@ -686,21 +776,25 @@ class InstrumentDriver:
         self.useHarmonicMixer = value
 
     def getMultiplierValue(self) -> int:
-        #TODO
-        return 1
+        if(not (self.harmonicBands is None or not self.harmonicBands)):
+            return self.harmonicBands[str(self.maxMeasurementFrequency)]["MultiplierValue"]
+        else:
+            return 0
 
 
     def setMultiplierValue(self, value:int):
         self.multiplierValue = value
 
     def getHarmonicMixerValue(self) -> int:
-        #TODO
-        return 1
+        if(not (self.harmonicBands is None or not self.harmonicBands)):
+            return self.harmonicBands[str(self.maxMeasurementFrequency)]["HMixerValue"]
+        else: 
+            return 0
 
-    def getHarmonicAndMultiplierBands(self) -> HMixerAndMultiplierBands:
+    def getHarmonicAndMultiplierBands(self):
         return self.harmonicBands
 
-    def setHarmonicAndMultiplierBands(self, theBands: HMixerAndMultiplierBands):
+    def setHarmonicAndMultiplierBands(self, theBands):
         self.harmonicBands = theBands
 
     def setHarmonicMixerValue(self, value:int):
@@ -740,9 +834,7 @@ class InstrumentDriver:
     
 
     def setMeasurementEventListener(self,listener:MeasurementEventListener):
-        #TODO
-        pass
-        #self.eventListeners.add(listener)
+        self.eventListeners.append(listener)
     
 
     def setDataFormat(self, dataFormat:TypeVNADataFormat):
@@ -762,20 +854,28 @@ class InstrumentDriver:
         self.useFifoBuffer = useFifoBuffer
     
     def newMeasurementEvent(self):
-        #TODO
+        #TODO MeasurementEvent
         pass
 
     def setScreenOff(self):
-        #TODO
+        #TODO dataMeasurement
         pass
 
     def setScreenOn(self):
         self.sendCommand("SYST:DISP:UPD ON")
 
 
-    def getMultiplierCutFrequency(self):
-        #TODO
-        pass
+    def getMultiplierCutFrequency(self) -> float:
+        cutFrequency = -1.0
+
+        if(not (self.harmonicBands is None or not self.harmonicBands)):
+            for band in self.harmonicBands:
+                if (self.harmonicBands[band]["LowerLimit"] > cutFrequency and self.harmonicBands[band]["MultiplierValue"] >= 0):
+                    cutFrequency = self.harmonicBands[band]["LowerLimit"]
+        return cutFrequency
+           
+        
+        
 
     
     def setMultiplierCutFrequency(self, cutFrequency:float):
@@ -840,9 +940,23 @@ class InstrumentDriver:
     def setFreqBandID(self,bandId:int): 
         raise NotImplementedError("Not supported yet.")
 
-    def sendConfigurationAndDisconnect(self) -> bool:
-        #TODO
-        return True
+
+    #TODO dataMeasurement vnaConfiguration 
+    def sendConfigurationAndDisconnect(self, medFile:MedFile) -> bool:
+        try:
+            if(not self.isConnected()):
+                if(self.connect() >= 0):
+                    self.currentMedFile = medFile
+                    if(self.dataMeasurement):
+                        return False
+                    
+            return False
+                    
+        except:
+            return True
+                        
+
+
 
 
     def getDataAutoCalibrate(self) -> list:

@@ -32,8 +32,6 @@ class TypeProbePolarization:
     Both = "Both"
 
 
-class HMixerAndMultiplierBands:
-    pass
 
 class MeasurementEventListener:
     pass
@@ -49,3 +47,7 @@ class Frequencies:
 class TypeVNADataFormat(Enum):
     REAL32 = 1
     ASCII = 2
+
+
+class MedFile:
+    pass

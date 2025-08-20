@@ -1,0 +1,20 @@
+{
+    "band1": {
+        "PowerLO": "123",
+        "IFfrequency": "",
+        "SignalInput": "",
+        "LOMix": "",
+        "MultiplierValue": "",
+        "HMixerValue": "",
+        "LowerLimit": "1000"
+    },
+    "band2": {
+        "PowerLO": "123",
+        "IFfrequency": "",
+        "SignalInput": "",
+        "LOMix": "",
+        "MultiplierValue": "",
+        "HMixerValue": "",
+        "LowerLimit": "2000"
+    }
+}
