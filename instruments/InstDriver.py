@@ -145,39 +145,38 @@ class InstrumentDriver:
             self.logger.info(f"Connected to: '{idn}'")
             return 1
     
-    def disconnect(self):
+    def disconnect(self) -> int:
         try:
-            if self.instance is not None:
-                self.write_cmd_sequence("disconnect")
-                self.instance.write("@LOC") # type: ignore
-                self.instance.close()
+            if self.isConnected():
+                self.sendCommand("@LOC")
+                self.instance.close() #type: ignore
                 self.logger.info("Connection closed")
                 self.logger.info(f"Session time:{time.time()-self.start_time}")
-            else:
-                self.logger.info("No connection to close")  
+            return 1
         except Exception as e:
             self.logger.info(f"Error while disconnecting: {e}")
+            return -1
 
 
 
     def InitialConfiguration(self, vnaConfiguration):
         self.vnaConfiguration = vnaConfiguration
         if(not self.readFromVNA):
-            self.instance.write("*RST") # type: ignore
+            self.sendCommand("*RST")
 
 
             #TODO dataMeasurement vnaConfiguration
             if(False):
-                self.instance.write("ROSC EXT")
-                self.instance.write("ROSC:EXT:FREQ 10MHz")
+                self.sendCommand("ROSC EXT")
+                self.sendCommand("ROSC:EXT:FREQ 10MHz")
             
             Receivers = False
         
             if(Receivers):
                 try:
-                    self.responce = self.instance.query("INST:PORT:COUN") # type: ignore
+                    self.responce = self.sendQuery("INST:PORT:COUN")
 
-                    self.numberOfPorts = self.responce.strip()
+                    self.numberOfPorts = int(self.responce.strip())
 
                 except Exception as e:
                     self.logger.info(f"Error querying number of ports: {e}")
@@ -198,13 +197,13 @@ class InstrumentDriver:
 
 
             if ("b1" in measUsedP1):
-                self.instance.write("SENS1:PATH1:DIR B16") # type: ignore
+                self.sendCommand("SENS1:PATH1:DIR B16")
             elif ("b2" in measUsedP1):
-                self.instance.write("SENS1:PATH2:DIR B16") # type: ignore
+                self.sendCommand("SENS1:PATH2:DIR B16")
             elif ("b3" in measUsedP1):
-                self.instance.write("SENS1:PATH3:DIR B16") # type: ignore
+                self.sendCommand("SENS1:PATH3:DIR B16")
             elif ("b4" in measUsedP1):
-                self.instance.write("SENS1:PATH4:DIR B16") # type: ignore
+                self.sendCommand("SENS1:PATH4:DIR B16")
 
 
             if(self.useTwoReceivers):
@@ -1096,25 +1095,6 @@ class InstrumentDriver:
     
 
             
-    def write_cmd_sequence(self, cmd):
-        self.logger.info(f"Executing command sequence: {cmd}")
-        if cmd.startswith("get") or cmd not in self.config["cmd_dist"].keys():
-            self.logger.info("Incorrect command or command type")
-            return
-        
-        cmd_sequence = self.config["cmd_dist"][cmd]
-        self.logger.info(f"Containing the following commands\n{cmd_sequence}")
-        if not self.isConnected():
-            return
-        try: 
-            for command in cmd_sequence:
-                if command == "SYSTem:ERRor:ALL?":
-                    self.logger.info(self.sendQuery(command))
-                else:
-                    self.write_with_delay(command, 1)
-        except Exception as e:
-            self.logger.info(str(e))
-            exit()   
 
 
 
