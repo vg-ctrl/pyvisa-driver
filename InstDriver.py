@@ -6,7 +6,7 @@ from time import sleep
 
 from new_classes import *
 
-#TODO lists to numpy array?
+#TODO lists to numpy array usage
 
 
 
@@ -17,7 +17,7 @@ class InstrumentDriver:
         with open(config_json, 'r') as f:
             self.config_file = json.load(f)
         f.close()
-        self.config = self.config_file["instruments"][self.type]
+
  
         with open("bands.json",'r') as f:
             self.harmonicBands = json.load(f)
@@ -26,12 +26,13 @@ class InstrumentDriver:
 
         self.log_file = log_file
         self.type = type
+        self.config = self.config_file["instruments"][self.type]
         self.rm = pyvisa.ResourceManager()
         self.instance = None
         self.start_time = time.time()
 
         self.VNAConfiguration: VNAConfiguration
-        self.dataFormat = TypeVNADataFormat.REAL32
+        self.dataFormat = TypeVNADataFormat.ASCII
 
         #New vars
         self.readFromVNA = False
@@ -119,12 +120,6 @@ class InstrumentDriver:
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
 
-    def list_devices(self):
-        instr_list = self.rm.list_resources('?*')
-        if len(instr_list)==0:
-            self.logger.info("No devices connected")
-        else:
-            self.logger.info(instr_list)
 
     def connect(self) -> int:
         #hislip port: 4880
@@ -158,56 +153,153 @@ class InstrumentDriver:
             return -1
 
 
+    #TODO
 
-    def InitialConfiguration(self, vnaConfiguration):
-        self.vnaConfiguration = vnaConfiguration
-        if(not self.readFromVNA):
-            self.sendCommand("*RST")
+    def InitialConfiguration(self) -> int:
 
 
-            #TODO dataMeasurement vnaConfiguration
-            if(False):
-                self.sendCommand("ROSC EXT")
-                self.sendCommand("ROSC:EXT:FREQ 10MHz")
+        self.readFromVNA = False
+        self.useHarmonicMixer = True
+        measUsedP1 = "S12"
+        measUsedP2 = ""
+        dataMeasurementgetMedFilegetAverage = 2
+        currentMedFilegetAverage = 2
+        dataMeasurementgetNumberOfScanPoints = 10
+        try:
+            if(True):
+                self.sendCommand("*RST")
+                if(False):
+                    self.sendCommand("ROSC EXT")
+                    self.sendCommand("ROSC:EXT:FREQ 10MHz")
+
+
+                if(False):
+                    try:
+                        self.responce = self.sendQuery("INST:PORT:COUN")
+                        self.numberOfPorts = int(self.responce.strip())
+                    except Exception as e:
+                        self.logger.info(f"Error querying number of ports: {e}")
+                        return
+                if(False):
+
+                    if(False):
+                        self.sendCommand("CALC:PAR:SDEF 'TRC1','" + measUsedP1 + "'")
+                        self.logger.info("VNA_ZNA.initialConfiguration: " + "CALC:PAR:SDEF 'TRC1','" + measUsedP1 + "'")
+
+                    elif(False):
+                        pass
+
+                    if(False):
+                        self.sendCommand("CALC:PAR:SDEF 'TRC1','b2/a1'")
+                        self.logger.info("CALC:PAR:SDEF 'TRC1','b2/a1'")
+
+                    self.sendCommand("DISP:WIND:TRAC:FEED 'TRC1'")
+
+                else:
+                    if(False):
+                        pass
+
+                    elif(False):
+                        pass
+
+                    if(False):
+                        self.sendCommand("CALC:PAR:SDEF 'TRC1','b2/a1'")
+                        self.logger.info("CALC:PAR:SDEF 'TRC1','b2/a1'")
+                    self.sendCommand("DISP:WIND:TRAC:FEED 'TRC1'")
+
+                if   ("b1" in measUsedP1):
+                    self.sendCommand("SENS1:PATH1:DIR B16")
+                elif ("b2" in measUsedP1):
+                    self.sendCommand("SENS1:PATH2:DIR B16")
+                elif ("b3" in measUsedP1):
+                    self.sendCommand("SENS1:PATH3:DIR B16")
+                elif ("b4" in measUsedP1):
+                    self.sendCommand("SENS1:PATH4:DIR B16")
+
+
+                if(self.useTwoReceivers):
+                
+                    if(False):
+
+                        self.sendCommand("CALC:PAR:SDEF 'TRC2','b1/a2'")
+                        self.sendCommand("DISP:WIND:TRAC2:FEED 'TRC2'")
+                        self.sendCommand("OUTP:DPOR PORT2")
+
+                    else:
+                        if(False):
+                            self.sendCommand("CALC:PAR:SDEF 'TRC2','b4/a1'")
+                            self.logger.info("CALC:PAR:SDEF 'TRC2','b4/a1'")
+                            self.sendCommand("SENS1:PATH4:DIR B16")
+                    
+                        else:
+                            if(False):
+                                self.sendCommand("CALC:PAR:SDEF 'TRC2','" + measUsedP2 + "'")
+                                self.logger.info("CALC:PAR:SDEF 'TRC2','" + measUsedP2 + "'")
+                            elif(False):
+                                self.sendCommand("CALC:PAR:SDEF 'TRC2','" + measUsedP2 + "'")
+                                self.logger.info("VNA_ZNA.initialConfiguration: " + "CALC:PAR:SDEF 'TRC2','" + "var123" + "'")
+                    
+                            if("b1" in measUsedP2):
+                                self.sendCommand("SENS1:PATH1:DIR B16")
+                            elif("b2" in measUsedP2):
+                                self.sendCommand("SENS1:PATH2:DIR B16")
+                            elif("b3" in measUsedP2):
+                                self.sendCommand("SENS1:PATH3:DIR B16")
+                            elif("b4" in measUsedP2):
+                                self.sendCommand("SENS1:PATH4:DIR B16")
+
+                        self.sendCommand("DISP:WIND:TRAC2:FEED 'TRC2'")
+
             
-            Receivers = False
-        
-            if(Receivers):
-                try:
-                    self.responce = self.sendQuery("INST:PORT:COUN")
+                self.sendCommand("SENS:CORR:EWAV ON")
+                self.sendCommand("INIT:CONT OFF")
 
-                    self.numberOfPorts = int(self.responce.strip())
+                if(self.dataFormat == TypeVNADataFormat.REAL32):
+                    self.sendCommand("FORM REAL,32")
+                else:
+                    self.sendCommand("FORM ASCII")
 
-                except Exception as e:
-                    self.logger.info(f"Error querying number of ports: {e}")
-                    return
+                if(False):
+                    if(dataMeasurementgetMedFilegetAverage > 1):
+                        self.sendCommand("SENS:AVER:COUN " + str(dataMeasurementgetMedFilegetAverage))
+                        self.sendCommand("SENS:AVER ON")
+                
+                    elif(currentMedFilegetAverage > 1):
+                        self.sendCommand("SENS:AVER:COUN " + str(currentMedFilegetAverage))
+                        self.sendCommand("SENS:AVER ON")
+                if(False):
+                    self.setExternalTrigger(True)
+                    self.sendCommand("SWE:COUN " + dataMeasurementgetNumberOfScanPoints)
+                else:
+                    self.setManualTrigger()
+            
+                self.sendCommand("SYST:DISP:UPD ON")
 
-            testPort = False
+                self.getErrors()
 
-
-            measUsedP1 = ""
-            measUsedP2 = ""
-            inti = 3
-
-            if (self.useHarmonicMixer or self.useMultiplier):
-                pass
-
+                return 1
+            
             else:
-                pass
+                if(self.dataFormat == TypeVNADataFormat.REAL32):
+                    self.sendCommand("FORM REAL,32")
+                else:
+                    self.sendCommand("FORM ASCII")
+
+                if(False):
+                    self.setExternalTrigger(True)
+                    self.sendCommand("SWE:COUN " + dataMeasurementgetNumberOfScanPoints)
+                else:
+                    self.setManualTrigger()
+                    self.sendCommand("SWE:COUN 1")
+                    self.sendCommand("INIT")
+                return 1
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.InitialConfiguration: {e}")
+            return -1
 
 
-            if ("b1" in measUsedP1):
-                self.sendCommand("SENS1:PATH1:DIR B16")
-            elif ("b2" in measUsedP1):
-                self.sendCommand("SENS1:PATH2:DIR B16")
-            elif ("b3" in measUsedP1):
-                self.sendCommand("SENS1:PATH3:DIR B16")
-            elif ("b4" in measUsedP1):
-                self.sendCommand("SENS1:PATH4:DIR B16")
 
 
-            if(self.useTwoReceivers):
-                pass
 
     def ConfigurateFrequencies(self):
         raise NotImplementedError("Not supported yet.")
@@ -218,8 +310,13 @@ class InstrumentDriver:
 
 
     def SendTrigger(self):
-        self.instance.write("*TRG") # type: ignore
-        sleep(self.TIMESLEEP)
+        if(self.sendCommand("*TRG") > 0):
+            try:
+                sleep(self.TIMESLEEP)
+            except Exception as e:
+                self.logger.error(f"VNA_ZNA.SendTrigger: {e}")
+            return 1
+        return -1
 
 
 
@@ -236,40 +333,101 @@ class InstrumentDriver:
         raise NotImplementedError("Not supported yet.")
 
     #TODO dataMeasurement
-    def dataReady(self, time:int) -> int:
-        try:
-            self.instance.clear() #type: ignore
-            if
+    def dataReady(self) -> int:
 
+        #temp var
+        dataMeasurementgetAcquisitionType = TypeAcquisition.Continuous
+        try:
+            self.instance.clear()
+            if(not self.useFifoBuffer):
+                if(dataMeasurementgetAcquisitionType != TypeAcquisition.Step):
+                    self.sendCommand("INIT")
+                response = self.sendQuery("*OPC?")
+                if("1" in response):
+                    return 1
+            else:
+                return 1
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.dataReady: {e}")
+            return -1
+        
+        return -3
+
+    #TODO vnaConfiguration
+    def getSingleData(self) -> list:
+
+        #temp vars
+        vnaConfigurationgetAutoPolarSwitch = False
+        vnaConfigurationgetAutoRXSwitch = False
+        vnaConfigurationgetCurrentProlarization = False
+
+        if((self.readFromVNA and not self.useTwoReceivers) or (self.readFromVNA and self.useTwoReceivers and self.numTraces > 2)):
+            return self.getDataMultiTraces()
+        elif(((vnaConfigurationgetAutoPolarSwitch or self.useTwoReceivers) and vnaConfigurationgetCurrentProlarization == TypeProbePolarization.Both) or vnaConfigurationgetAutoRXSwitch or self.readFromVNA and self.useTwoReceivers):
+            return self.getDataAutoPol()
+        else:
+            return self.getDataSinglePol()
 
     #TODO dataMeasurement
-    def getDataSinglePol(self):
+    def getDataSinglePol(self) -> list:
+
+        #temp vars
+        dataMeasurementisMultifrequency = False
+        dataMeasurementgetAcquisitionType = False
+        FactoryClasssetNumberOfPointsAcquiredLastCut = 0
+        dataMeasurementgetNumberOfScanPoints = 10
+
+
         listOfValues = []
         message = ""
 
         try:
-
-            if(self.useFifoBuffer):
-                pass
+            self.instance.clear()
+            if(dataMeasurementisMultifrequency and dataMeasurementgetAcquisitionType == TypeAcquisition.Continuous and self.useFifoBuffer):
+                response = self.sendQuery("CALC:DATA:NSW:COUN?")
+                try:
+                    numberSweeps = int(response.strip())
+                    FactoryClasssetNumberOfPointsAcquiredLastCut = numberSweeps
+                    if(numberSweeps == dataMeasurementgetNumberOfScanPoints):
+                        for i in range(numberSweeps):
+                            self.sendCommand("CALC:PAR:SEL 'TRC1'")
+                            self.sendCommand("CALC:DATA:NSW:FIRS? SDAT, " + i)
+                            listOfValues.append(self.readDataFromAnaliser())
+                    self.sendCommand("*CLS")
+                    self.sendCommand("SWE:COUN " + str(dataMeasurementgetNumberOfScanPoints))
+                    self.sendCommand("INIT")
+                except Exception as e:
+                    self.logger.error(f"ZNA.getDataSinglePol Exception-> {e}")
             else:
-                self.instance.write("CALC:DATA? SDATA") # type: ignore
-                if(True):
+                self.sendCommand("CALC:DATA? SDATA")
+                if(dataMeasurementgetAcquisitionType == TypeAcquisition.Step):
                     try:
                         sleep(self.TIMESLEEP)
                     except Exception as e:
-                        self.logger.info(f"Error during sleep: {e}")
+                        self.logger.info(f"VNA_ZNA.getDataSinglePol InterruptedException-> {e}")
                         return
-
-
+                dataValues = self.readDataFromAnaliser()
+                listOfValues.append(dataValues)
+        
         except Exception as e:
-            self.logger.info(f"Error: {e}")  
+            self.logger.error(f"VNA_ZNA.getDataSinglePol: {e}")
+            return None
+        
+        if(dataMeasurementgetAcquisitionType == TypeAcquisition.Step):
+            self.sendCommand("INIT")
+
+        return listOfValues
 
 
+
+    #TODO ?
+    def getDataAutoPol(self):
+        pass
+
+    #TODO ?
     def getDataMultiTraces(self):
         pass
 
-    def getDataAutoPol(self):
-        pass
 
 
     def getSingleData(self):
@@ -401,12 +559,10 @@ class InstrumentDriver:
 
 
     def getIFfrequency(self) -> float:
-        try:
-            response = self.sendQuery("SENS:IF:FILT:STAG1:FREQ?")
-            return float(response.strip().replace(",","."))
-        except Exception as e:
-            self.logger.error(f"VNA_ZNA.getIFfrequency: {e}")
-            return -1
+        if(not (self.harmonicBands is None or not self.harmonicBands)):
+            return self.harmonicBands[self.maxMeasurementFrequency]["IFfrequency"]
+        else:
+            return 0.0
 
     def getSignalInput(self) -> str:
         if(not (self.harmonicBands is None or not self.harmonicBands)):
@@ -426,11 +582,11 @@ class InstrumentDriver:
     def setListOfPorts(self, listOfPorts:list):
         self.listOfPorts = listOfPorts
 
-
+    #TODO not used
     def getError(self) -> int:
         return self.error
     
-
+    #TODO not used
     def setError(self, error:int):
         self.error = error
 
@@ -442,11 +598,6 @@ class InstrumentDriver:
     def getDataMeasurement(self) -> DataMeasurement:
         return self.dataMeasurement
     
-    def sendTrigger(self) -> int:
-        if (self.sendCommand("*TRG")>0):
-            return 1
-        else:
-            return -1
         
     def hldMode(self) -> int:
 
@@ -459,11 +610,11 @@ class InstrumentDriver:
     def sendCommand(self,command:str) -> int:
         try:
             self.instance.write(command) # type: ignore
-            self.logger.info("VNA_ZNA_command: " + command)
+            self.logger.info("VNA_ZNA.sendCommand: " + command)
             return 1
 
         except Exception as e:
-            self.logger.info(f"Error: {e}")
+            self.logger.error(f"VNA_ZNA.sendCommand: {e}")
             return -1
     
     def sendQuery(self,command:str) -> str:
@@ -471,14 +622,17 @@ class InstrumentDriver:
             self.instance.write(command) # type: ignore
             self.logger.info("VNA_ZNA_query: " + command)
             response = self.instance.read() # type: ignore
+            self.logger.info("VNA_ZNA_response: " + response)
             return response
 
         except Exception as e:
-            self.logger.info(f"Error: {e}")
+            self.logger.error(f"VNA_ZNA.sendQuery: {e}")
             return ""
 
 
     def setManualTrigger(self) -> int:
+        #temp vars
+        dataMeasurementisMultifrequency = True
         """
         Configura el analizador para recibir triggers manuales 
             Returns: Int con los errores ocurridos
@@ -486,7 +640,7 @@ class InstrumentDriver:
         try:
             self.sendCommand("TRIG:SOUR MAN")
 
-            if (not self.dataMeasurement.isMultifrequency()):
+            if(not dataMeasurementisMultifrequency):
                 self.sendCommand("SWE:TYPE POIN")
                 self.sendCommand("TRIG:LINK 'POIN'")
             return 1
@@ -500,13 +654,15 @@ class InstrumentDriver:
 
 
     def setExternalTrigger(self,positiveTTL:bool) -> int:
+        #temp vars
+        dataMeasurementisMultifrequency = True
         """
         Funccion que configura los triggers externos
         
             Parameter: positiveTTL Booleano que indica que el pulso TTL es por franco
             positivo
         
-            Returns: Int con los errores ocurridos
+            Returns: Int con los errores ocurridos 
         """
         try:
             self.sendCommand("TRIG:SOUR EXT")
@@ -515,12 +671,9 @@ class InstrumentDriver:
             else:
                 self.sendCommand("TRIG:SLOP NEG")
             
-
-            if (not self.dataMeasurement.isMultifrequency()):
+            if (not dataMeasurementisMultifrequency):
                 self.sendCommand("SWE:TYPE POIN")
                 self.sendCommand("TRIG:LINK 'POIN'")
-            
-
             return 1
          
         except Exception as e:
@@ -552,6 +705,7 @@ class InstrumentDriver:
                 if((self.useHarmonicMixer or self.useMultiplier) and swBB):
                     self.configureFrequencyOffset()
                 else:
+                    return 1
                     
 
 
@@ -621,6 +775,13 @@ class InstrumentDriver:
 
     def configureFrequencyOffset(self) -> int:
         try:
+            #temp vars
+            dataMeasurementgetMedFilegetFrecuencyListsize = 10
+            dataMeasurementgetMedFilegetFrecuencyListgetgetFirst =[]
+            dataMeasurementgetMedFilegetFrecuencyListgetgetLast =[]
+            getMedFilegetFrecuencyListgetgetNumberOfFrequencies=[]
+
+
             # We enable the port config mode.
             harmoValue = 0
             IfFrequency = 0
@@ -725,17 +886,24 @@ class InstrumentDriver:
 
                     #Setting the frequency range
                     #TODO dataMeasurement
-
+                    for i in range(dataMeasurementgetMedFilegetFrecuencyListsize):
+                        self.sendCommand("FREQ:STAR" + dataMeasurementgetMedFilegetFrecuencyListgetgetFirst[i] + "E+9; STOP "+dataMeasurementgetMedFilegetFrecuencyListgetgetLast[i] + "E+9")
+                        self.sendCommand("SWE:POIN" + dataMeasurementgetMedFilegetFrecuencyListsize[i])
+                        self.sendCommand("SENS:BWID " + str(self.ifBandwidth))
 
             return 1
     
-        except:
-            return  
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.configureFrequencyOffset: {e}")
+            return -1
 
 
     def readASCIIData(self) -> str:
         try:
             response = self.instance.read_ascii_values() # type: ignore
+            print(response)
+            print(type(response))
+            return response
             return response.strip().replace(":",",")
         except Exception as e:
             self.logger.error(f"VNA_ZNA.readASCIIData: {e}")
@@ -799,6 +967,7 @@ class InstrumentDriver:
     def setHarmonicMixerValue(self, value:int):
         self.harmonicMixerValue = value
 
+    #TODO not used
     def setEnable(self, enable:bool):
         self.enable = enable
 
@@ -806,7 +975,7 @@ class InstrumentDriver:
         return self.maxMeasurementFrequency
 
 
-    def etMaxMeasurementFrequency(self, maxFrequency:float):
+    def setMaxMeasurementFrequency(self, maxFrequency:float):
         self.maxMeasurementFrequency = maxFrequency
 
     def getMinMeasurementFrequency(self) -> float:
@@ -831,7 +1000,7 @@ class InstrumentDriver:
     def getDefaultOutputPortIndex(self) -> int:
         return self.defaultOutputPotrtIndex
     
-
+    #TODO
     def setMeasurementEventListener(self,listener:MeasurementEventListener):
         self.eventListeners.append(listener)
     
@@ -858,7 +1027,9 @@ class InstrumentDriver:
 
     def setScreenOff(self):
         #TODO dataMeasurement
-        pass
+        switch1 = True
+        if(switch1):
+            self.sendCommand("SYST:DISP:UPD OFF")
 
     def setScreenOn(self):
         self.sendCommand("SYST:DISP:UPD ON")
@@ -881,8 +1052,6 @@ class InstrumentDriver:
         self.multiplierCutFrequency = cutFrequency
 
 
-    def resetBuffer(self):
-        self.sendCommand("*CLS")
 
 
     def setUseTwoReceivers(self, useTwoReceivers:bool):
@@ -1068,19 +1237,7 @@ class InstrumentDriver:
 
 
 
-    def write_with_delay(self, cmd, delay=0.1):
-        if not self.isConnected():
-            return
-        self.instance.write(cmd)# type: ignore
-        sleep(delay)
-        return
-    
-    def query_with_delay(self, cmd, delay=0.1):
-        if not self.isConnected():
-            return
-        response = self.instance.query(cmd) # type: ignore
-        sleep(delay)
-        return response.strip()
+
     
     def isConnected(self):
         if self.instance is None:

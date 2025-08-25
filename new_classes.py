@@ -25,8 +25,7 @@ class VNAConfiguration:
 
 
 class DataMeasurement:
-    def isMultifrequency(self):
-        return True
+    pass
     
 class TypeProbePolarization:
     Both = "Both"
@@ -48,6 +47,14 @@ class TypeVNADataFormat(Enum):
     REAL32 = 1
     ASCII = 2
 
+class TypeAcquisition(Enum):
+    Continuous = 1
+    Step = 2
+
+class TypeProbePolarization(Enum):
+    Both = 1
+    Type1 = 2
+    Type2 = 3
 
 class MedFile:
     pass

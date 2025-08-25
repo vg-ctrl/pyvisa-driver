@@ -1,0 +1,200 @@
+###Commands 
+readASCIIData()
+readBinaryData()
+
+readDataFromAnaliser
+    readASCIIData
+    readBinaryData
+
+setManualTrigger()
+setExternalTrigger()
+
+InitialConfiguration()
+    setManualTrigger()
+    setExternalTrigger()
+
+dataReady()
+
+getDataMultiTraces()     #TODO
+    dataReady()
+    readDataFromAnaliser
+
+getDataAutoPol()         #TODO
+    dataReady()
+    readDataFromAnaliser
+
+getDataSinglePol
+    readDataFromAnaliser
+
+getSingleData()
+    getDataMultiTraces() #TODO
+    getDataAutoPol()     #TODO
+    getDataSinglePol()
+
+getHarmonicMixerValue
+setHarmonicMixerValue
+
+getMultiplierValue
+setMultiplierValue
+
+configureFrequencyOffset() #TODO
+    getHarmonicMixerValue()
+    getMultiplierValue()
+
+setMultifrecuencyParameters()
+    getHarmonicMixerValue()
+    getMultiplierValue()
+    configureFrequencyOffset()
+
+setMonofrecuencyParameters()
+    configureFrequencyOffset()
+
+setScreenOn
+
+sendConfigurationAndDisconnect() #TODO
+readConfigurationAndDisconnect()
+    setScreenOn()
+
+
+
+
+
+####### Simple Commands
+isConnected()
+setScreenOff #TODO
+clearBuffer()
+connect()
+disconnect()
+sendTrigger()
+sendCommand()
+sendQuery()
+hldMode() #Doesn't exist?
+setMeasurementEventListener() #TODO
+newMeasurementEvent #TODO
+
+
+
+
+
+
+####### VNA data/configuration Commands
+setReadFromVNA
+getReadFromVNA
+
+getMultiplierCutFrequency
+setMultiplierCutFrequency
+
+setUseTwoReceivers
+getUseTwoReceivers
+
+setDataFormat
+getDataFormat
+
+getUseFifoBuffer
+setUseFifoBuffer
+
+getTriggerType
+
+getUseMultiplier
+setUseMultiplier
+
+getUseHarmomixMixer
+setUseHarmonicMixer
+
+
+
+
+
+getHarmonicAndMultiplierBands
+setHarmonicAndMultiplierBands
+
+getMaxMeasurementFrequency
+setMaxMeasurementFrequency
+
+getMinMeasurementFrequency
+setMinMeasurementFrequency
+
+getSweepTime
+
+setPower
+
+setIFBandwidth
+
+getVNAConfiguration
+
+getTraces
+
+getDefaultInputPortIndex
+getDefaultOutputPortIndex
+
+getIp()
+setIp()
+
+getPowerLO()
+
+getPort()
+setPort()
+
+getName()
+setName()
+
+setMaxFrequency()
+
+
+getListOfBandwith()
+setListOfBandwith()
+
+getIfFrequency()
+
+getSignalInput()
+
+getListOfPorts()
+
+getError()
+setError()
+
+getErrors()
+
+getNumReceivers()
+
+getNumSource()
+
+getIFfrequency()
+
+getDefaultIFBWIndex
+
+setEnable #not used
+
+setDataMeasurement() #TODO
+getDataMeasurement()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

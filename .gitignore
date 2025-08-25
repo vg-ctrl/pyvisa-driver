@@ -1,3 +1,5 @@
 .vscode
 pyvisa-driver.code-workspace
 app.log
+__pycache__
+misc.py
