@@ -39,7 +39,7 @@ class InstrumentDriver:
         self.useTwoReceivers = False
         self.useFifoBuffer = False
         self.triggerType = None
-        self.TIMESLEEP = 50
+        self.TIMESLEEP = 1
         self.currentMedFile = None
         self.defaultIFBWIndex = 9
         self.defaultInputPortIndex = 6
@@ -171,41 +171,29 @@ class InstrumentDriver:
                 if(False):
                     self.sendCommand("ROSC EXT")
                     self.sendCommand("ROSC:EXT:FREQ 10MHz")
-
-
                 if(False):
                     try:
                         self.responce = self.sendQuery("INST:PORT:COUN")
                         self.numberOfPorts = int(self.responce.strip())
                     except Exception as e:
-                        self.logger.info(f"Error querying number of ports: {e}")
+                        self.logger.error(f"Error querying number of ports: {e}")
                         return
                 if(False):
-
                     if(False):
                         self.sendCommand("CALC:PAR:SDEF 'TRC1','" + measUsedP1 + "'")
-                        self.logger.info("VNA_ZNA.initialConfiguration: " + "CALC:PAR:SDEF 'TRC1','" + measUsedP1 + "'")
-
                     elif(False):
                         pass
-
                     if(False):
                         self.sendCommand("CALC:PAR:SDEF 'TRC1','b2/a1'")
-                        self.logger.info("CALC:PAR:SDEF 'TRC1','b2/a1'")
-
                     self.sendCommand("DISP:WIND:TRAC:FEED 'TRC1'")
-
                 else:
                     if(False):
                         pass
-
                     elif(False):
                         pass
-
-                    if(False):
+                    if(True):
                         self.sendCommand("CALC:PAR:SDEF 'TRC1','b2/a1'")
-                        self.logger.info("CALC:PAR:SDEF 'TRC1','b2/a1'")
-                    self.sendCommand("DISP:WIND:TRAC:FEED 'TRC1'")
+                    self.sendCommand("DISP:WIND:TRAC:FEED 'Trc1'")
 
                 if   ("b1" in measUsedP1):
                     self.sendCommand("SENS1:PATH1:DIR B16")
@@ -217,28 +205,21 @@ class InstrumentDriver:
                     self.sendCommand("SENS1:PATH4:DIR B16")
 
 
-                if(self.useTwoReceivers):
-                
+                if(False):
                     if(False):
-
                         self.sendCommand("CALC:PAR:SDEF 'TRC2','b1/a2'")
                         self.sendCommand("DISP:WIND:TRAC2:FEED 'TRC2'")
                         self.sendCommand("OUTP:DPOR PORT2")
-
                     else:
                         if(False):
                             self.sendCommand("CALC:PAR:SDEF 'TRC2','b4/a1'")
-                            self.logger.info("CALC:PAR:SDEF 'TRC2','b4/a1'")
                             self.sendCommand("SENS1:PATH4:DIR B16")
-                    
                         else:
                             if(False):
                                 self.sendCommand("CALC:PAR:SDEF 'TRC2','" + measUsedP2 + "'")
-                                self.logger.info("CALC:PAR:SDEF 'TRC2','" + measUsedP2 + "'")
                             elif(False):
                                 self.sendCommand("CALC:PAR:SDEF 'TRC2','" + measUsedP2 + "'")
-                                self.logger.info("VNA_ZNA.initialConfiguration: " + "CALC:PAR:SDEF 'TRC2','" + "var123" + "'")
-                    
+
                             if("b1" in measUsedP2):
                                 self.sendCommand("SENS1:PATH1:DIR B16")
                             elif("b2" in measUsedP2):
@@ -247,18 +228,16 @@ class InstrumentDriver:
                                 self.sendCommand("SENS1:PATH3:DIR B16")
                             elif("b4" in measUsedP2):
                                 self.sendCommand("SENS1:PATH4:DIR B16")
-
                         self.sendCommand("DISP:WIND:TRAC2:FEED 'TRC2'")
 
-            
-                self.sendCommand("SENS:CORR:EWAV ON")
+                self.sendCommand("SENS:CORR:EWAV ON")   #Wave correction logic
                 self.sendCommand("INIT:CONT OFF")
-
+                
                 if(self.dataFormat == TypeVNADataFormat.REAL32):
                     self.sendCommand("FORM REAL,32")
                 else:
                     self.sendCommand("FORM ASCII")
-
+                
                 if(False):
                     if(dataMeasurementgetMedFilegetAverage > 1):
                         self.sendCommand("SENS:AVER:COUN " + str(dataMeasurementgetMedFilegetAverage))
@@ -272,11 +251,11 @@ class InstrumentDriver:
                     self.sendCommand("SWE:COUN " + dataMeasurementgetNumberOfScanPoints)
                 else:
                     self.setManualTrigger()
-            
+                
                 self.sendCommand("SYST:DISP:UPD ON")
-
+                
                 self.getErrors()
-
+                exit()
                 return 1
             
             else:
@@ -383,7 +362,7 @@ class InstrumentDriver:
 
         try:
             self.instance.clear()
-            if(dataMeasurementisMultifrequency and dataMeasurementgetAcquisitionType == TypeAcquisition.Continuous and self.useFifoBuffer):
+            if(False):
                 response = self.sendQuery("CALC:DATA:NSW:COUN?")
                 try:
                     numberSweeps = int(response.strip())
@@ -404,7 +383,7 @@ class InstrumentDriver:
                     try:
                         sleep(self.TIMESLEEP)
                     except Exception as e:
-                        self.logger.info(f"VNA_ZNA.getDataSinglePol InterruptedException-> {e}")
+                        self.logger.error(f"VNA_ZNA.getDataSinglePol InterruptedException-> {e}")
                         return
                 dataValues = self.readDataFromAnaliser()
                 listOfValues.append(dataValues)
@@ -421,24 +400,159 @@ class InstrumentDriver:
 
 
     #TODO ?
-    def getDataAutoPol(self):
-        pass
+    def getDataAutoPol(self) -> list:
+        listOfValues = []
+        numPoints = 0
+        maxPoints = 0
+        multFactor = 1
+        dataReady = 0
 
-    #TODO ?
-    def getDataMultiTraces(self):
-        pass
-
-
-
-    def getSingleData(self):
-        if ((self.readFromVNA and not self.useTwoReceivers) or (self.readFromVNA and self.useTwoReceivers and self.numberOfPorts > 2)):
-            return self.getDataMultiTraces()
-        elif (((self.vnaConfiguration.getAutoPolarSwitch() or self.useTwoReceivers) and self.vnaConfiguration.getCurrentProlarization() == TypeProbePolarization.Both) \
-                or self.vnaConfiguration.getAutoRXSwitch() or self.readFromVNA and self.useTwoReceivers):
-            return self.getDataAutoPol()
+        if(False):
+            multFactor = True
+        if(False):
+            multFactor = False
+        if(False):
+            maxPoints = False * multFactor
         else:
-            return self.getDataSinglePol()
+            maxPoints = multFactor
+
+
+        try:
+            self.instance.read()
+            if(False):
+                try:
+                    numberSweeps = self.sendQuery("CALC:DATA:NSW:COUN?").strip
+                    #FactoryClass.setNumberOfPointsAcquiredLastCut(numberSweeps);
+                    if(True):
+                        for i in range (1, numberSweeps):
+                            #Sweep->
+                            self.sendCommand("CALC:PAR:SEL 'TRC1'")
+                            self.sendCommand("CALC:DATA:NSW:FIRS? SDAT, " + i)
+                            listOfValues.append(self.readDataFromAnaliser)
+                            self.sendCommand("CALC:PAR:SEL 'TRC2'")
+                            self.sendCommand("CALC:DATA:NSW:FIRS? SDAT, " + i)                     
+                            listOfValues.append(self.readDataFromAnaliser)
+                    else:
+                        self.logger.error(f'"getDataAutoPol_buffer: " + numberSweeps + " points acquired from a total of " + dataMeasurement.getNumberOfScanPoints()"')
+                except Exception as e:
+                    self.logger.error(f"VNA_ZNA.getDataAutoPol_buffer: {e}")
+                finally:
+                    self.sendCommand("*CLS")
+                    #self.sendCommand("SWE:COUN " + this.dataMeasurement.getNumberOfScanPoints())
+            else:
+                if(True):
+                    self.sendCommand("CALC:PAR:SEL 'TRC1'")
+                self.sendCommand("CALC:DATA? SDATA")
+                dataPoints = self.readDataFromAnaliser()
+                listOfValues.append(dataPoints)
+                if(numPoints != maxPoints):
+                    if(False):
+                        self.sendCommand("CALC:PAR:SEL 'TRC2'")
+                        self.sendCommand("CALC:DATA? SDATA")
+                        dataPoints = self.readDataFromAnaliser()
+                        listOfValues.append(dataPoints)
+                        dataReady = self.dataReady(300)
+                    else:
+                        self.sendCommand("CALC:PAR:SEL 'TRC2'")
+                        self.sendCommand("CALC:DATA? SDATA")
+                        dataPoints = self.readDataFromAnaliser()
+                        listOfValues.append(dataPoints)
+                        numPoints += 1
+
+                numPoints += 1
+        
+        except Exception as e:
+            self.logger.error(f"ZNA.getDataAutoPol: {e}")
+            return None
     
+        if (dataReady < 0):
+            #TODO
+            pass
+        if(True):
+            self.sendCommand("INIT")
+
+        return listOfValues
+
+
+
+
+    #TODO
+    def getDataMultiTraces(self):
+        listOfValues = []
+        numPoints = 0
+        maxPoints = 0
+        mulFactor = 1
+        dataReady = 0
+
+        mulFactor = self.numTraces
+
+        if(self.useFifoBuffer):
+            pass
+        else:
+            maxPoints = mulFactor
+
+        try:
+            self.instance.read()
+            if(True):
+                try:
+                    numberSweeps = self.sendQuery("CALC:DATA:NSW:COUN?").strip()
+                    #FactoryClass.setNumberOfPointsAcquiredLastCut(numberSweeps);
+                    if(True):
+                        for i in range (1, numberSweeps):
+                        #this.sendCommand("Sweep->" + String.valueOf(i));
+                            for j in range (1, self.numTraces):
+                                self.sendCommand("CALC:PAR:SEL 'TRC" + j + "'")
+                                self.sendCommand("CALC:DATA:NSW:FIRS? SDAT, " + i)
+                                listOfValues.append(self.readDataFromAnaliser())
+                    else:
+                        self.logger.error("getDataAutoPol_buffer: " + numberSweeps + " points acquired from a total of " + dataMeasurement.getNumberOfScanPoints())
+
+                except Exception as e:
+                    self.logger.error(f"ZNA.getDataAutoPol_buffer: {e}")
+                finally:
+                    pass
+                    #self.sendCommand("SWE:COUN " + this.dataMeasurement.getNumberOfScanPoints())
+            elif(self.numTraces==1):
+                self.sendCommand("CALC:DATA? SDATA")
+                if(True):
+                    try:
+                        sleep(self.TIMESLEEP)
+                    except Exception as e:
+                        self.logger.error(f"ZNA.getDataSinglePol InterruptedException-> {e}")
+                dataValues = self.readDataFromAnaliser()
+                listOfValues.apend(dataValues)
+
+            else:
+                for i in range (1, self.numTraces):
+                    self.sendCommand("CALC:PAR:SEL '" + this.traces[2 * i - 2] + "'")
+                    self.sendCommand("CALC:DATA? SDATA")
+                    if(True):
+                        try:
+                            sleep(self.TIMESLEEP)
+                        except Exception as e:
+                            self.logger.error(f"ZNA.getDataSinglePol InterruptedException-> {e}")
+                    dataPoints = self.readDataFromAnaliser()
+                    listOfValues.append(dataPoints)
+                    numPoints += 1
+        
+        except Exception as e:
+            self.logger.error(f"VNA_ZNA.getDataAutoPol: {e}")
+            return None
+
+        if(dataReady < 0):
+            #TODO
+            pass
+        if(True):
+            self.sendCommand("INIT")
+        return listOfValues
+
+
+
+
+
+
+
+
 
     def getMultipleData(self):
         raise NotImplementedError("Not supported yet.")
@@ -736,9 +850,9 @@ class InstrumentDriver:
         numberErrors = 0
 
         try:
-            self.instance.clear() # type: ignore
+            #self.instance.clear() # type: ignore
             numberErrors = self.sendQuery("SYSTem:ERRor:COUNt?")
-            self.instance.clear()# type: ignore
+            #self.instance.clear()# type: ignore
             response = self.sendQuery("SYSTem:ERRor:ALL?").strip()
             self.logger.info("Error response " + response)
 
@@ -901,10 +1015,7 @@ class InstrumentDriver:
     def readASCIIData(self) -> str:
         try:
             response = self.instance.read_ascii_values() # type: ignore
-            print(response)
-            print(type(response))
             return response
-            return response.strip().replace(":",",")
         except Exception as e:
             self.logger.error(f"VNA_ZNA.readASCIIData: {e}")
             return ""
@@ -1066,22 +1177,15 @@ class InstrumentDriver:
 
 
     def readDataFromAnaliser(self) -> list:
-        listOfValues = []
         try:
             if(self.dataFormat == TypeVNADataFormat.ASCII):
                 message = self.readASCIIData()
             else:
                 message = self.readBinaryData()
-            values = message.split(",")
-
-            for value in values:
-                if(not value == ""):
-                    listOfValues.append(float(value))
-        
         except Exception as e:
             self.logger.error(f"VNA_ZNA.readDataFromAnaliser: {e}")
         finally:
-            return listOfValues
+            return message
             
         
 
